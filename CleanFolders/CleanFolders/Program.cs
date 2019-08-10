@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Reflection;
 using Serilog;
 
 
@@ -27,11 +24,20 @@ namespace CleanFolders
 
         }
 
-        public void ClearFolders()
+        private static void ClearFolders()
         {
             try
             {
+                var fileInfo = new FileInfo(@"DeletionFolders.txt");
+
+                if (!fileInfo.Exists)
+                {
+                    Log.Error($"File DeletionFolders.txt not found in {GetExecutingDirectory()}");
+                    return;
+                }
+
                 var folderPaths = System.IO.File.ReadAllLines(@"DeletionFolders.txt");
+
 
                 foreach (var folderPath in folderPaths)
                 {
@@ -50,7 +56,7 @@ namespace CleanFolders
                             }
                             catch (Exception ex)
                             {
-                                Log.Information($"Could not delete {filePath}, {ex.Message}");
+                                Log.Error($"Could not delete {filePath}, {ex.Message}");
                             }
                         }
 
@@ -69,5 +75,14 @@ namespace CleanFolders
             }
         }
 
+        public static string GetExecutingDirectory()
+        {
+            var assembly = Assembly.GetEntryAssembly();
+            if (assembly == null) return "Unknown Assembly";
+
+            var location = new Uri(assembly.GetName().CodeBase);
+            var info = new FileInfo(location.AbsolutePath).Directory;
+            return info != null ? info.FullName : "Unknown Directory";
+        }
     }
 }
